@@ -1,0 +1,63 @@
+/*
+def main with input x output y as
+    a := x + 1;
+    b := 0;
+    c := 1;
+
+    while b < 5 do
+        (
+            c := c * (a + b);
+            if not (c < 100) then
+                c := c - 10
+            else
+                c := c + 2;
+            b := b + 1
+        );
+
+    if (c < 50) and (x < 10) then
+        (
+            y := c + x;
+            skip
+        )
+    else
+        (
+            y := c - x;
+            y := y * 2
+        )
+*/
+
+// 5. Programma (Prog)
+// Corretto per rispecchiare la tua enum Prog::Main
+prog = {
+    SOI ~
+    "def" ~ "main" ~ "with" ~ "input" ~ ident ~ "output" ~ ident ~ "as" ~ cmd ~
+    EOI
+}
+
+/*
+def main with input x output y as
+    a := x + 1;
+    b := 0;
+    c := 1;
+
+    while b < 5 do
+        (
+            c := c * (a + b);
+            if not (c < 100) then
+                c := c - 10
+            else
+                c := c + 2;
+            b := b + 1
+        );
+
+    if (c < 50) and (x < 10) then
+        (
+            y := c + x;
+            skip
+        )
+    else
+        (
+            y := c - x;
+            y := y * 2
+        )
+*/

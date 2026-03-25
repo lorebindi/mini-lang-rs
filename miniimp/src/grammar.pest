@@ -1,0 +1,54 @@
+// Per gestire la sequenza (Composition) senza ricorsione infinita:
+// 1. Elementi base
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+ident      = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+number     = @{ ASCII_DIGIT+ }
+neg_number = {"(" ~ "-" ~ number ~ ")"}
+
+
+// 2. Espressioni Aritmetiche (Expr)
+expr   = { term ~ (add_op ~ term)* }
+term   = { factor ~ (mul_op ~ factor)* }
+factor = { number | ident | "(" ~ expr ~ ")" | neg_number }
+add_op = { "+" | "-" }
+mul_op = { "*" }
+
+// 3. Espressioni Booleane (BoolExpr)
+// Nota: aggiunte le parentesi per bool_expr per evitare ambiguità
+bool_expr = { bool_and }
+
+bool_and = { bool_not ~ ("and" ~ bool_not)* }
+
+bool_not = { "not" ~ bool_not | bool_atom }
+
+bool_atom = {
+      "true"
+    | "false"
+    | expr ~ "<" ~ expr
+    | "(" ~ bool_expr ~ ")"
+}
+
+// 4. Comandi (Cmd)
+// Per gestire la sequenza (Composition) senza ricorsione infinita:
+cmd = { stmt ~ (";" ~ stmt)* }
+
+stmt = {
+    if_stmt |
+    while_stmt |
+    assign |
+    skip |
+    "(" ~ cmd ~ ")" // Corrisponde a Cmd::Parenthesis
+}
+
+assign     = { ident ~ ":=" ~ expr }
+if_stmt    = { "if" ~ bool_expr ~ "then" ~ stmt ~ "else" ~ stmt }
+while_stmt = { "while" ~ bool_expr ~ "do" ~ stmt }
+skip       = { "skip" }
+
+// 5. Programma (Prog)
+// Corretto per rispecchiare la tua enum Prog::Main
+prog = {
+    SOI ~
+    "def" ~ "main" ~ "with" ~ "input" ~ ident ~ "output" ~ ident ~ "as" ~ cmd ~
+    EOI
+}

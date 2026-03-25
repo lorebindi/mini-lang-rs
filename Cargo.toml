@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "miniimp",
+    "minifun"
+]
+
+resolver = "3"
