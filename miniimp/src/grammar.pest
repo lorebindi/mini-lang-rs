@@ -17,16 +17,21 @@ mul_op = { "*" }
 // Nota: aggiunte le parentesi per bool_expr per evitare ambiguità
 bool_expr = { bool_and }
 
-bool_and = { bool_not ~ ("and" ~ bool_not)* }
+bool_and = { bool_not ~ (and_op ~ bool_not)* }
+and_op = {"and"}
 
-bool_not = { "not" ~ bool_not | bool_atom }
+bool_not = { not_op ~ bool_not | bool_atom }
+not_op = {"not"}
 
 bool_atom = {
-      "true"
-    | "false"
+      bool_true
+    | bool_false
     | expr ~ "<" ~ expr
-    | "(" ~ bool_expr ~ ")"
+    | bool_atom_bracket
 }
+bool_true = {"true"}
+bool_false = {"false"}
+bool_atom_bracket = {"(" ~ bool_expr ~ ")"}
 
 // 4. Comandi (Cmd)
 // Per gestire la sequenza (Composition) senza ricorsione infinita:
@@ -37,13 +42,14 @@ stmt = {
     while_stmt |
     assign |
     skip |
-    "(" ~ cmd ~ ")" // Corrisponde a Cmd::Parenthesis
+    bracket_cmd
 }
 
 assign     = { ident ~ ":=" ~ expr }
 if_stmt    = { "if" ~ bool_expr ~ "then" ~ stmt ~ "else" ~ stmt }
 while_stmt = { "while" ~ bool_expr ~ "do" ~ stmt }
 skip       = { "skip" }
+bracket_cmd = { "(" ~ cmd ~ ")" }
 
 // 5. Programma (Prog)
 // Corretto per rispecchiare la tua enum Prog::Main

@@ -1,4 +1,4 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ArithExpr {
     Num(i64),
     Var(String),
@@ -7,7 +7,7 @@ pub enum ArithExpr {
     Mul(Box<ArithExpr>, Box<ArithExpr>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BoolExpr {
     True,
     False,
@@ -16,7 +16,7 @@ pub enum BoolExpr {
     Lt(Box<ArithExpr>, Box<ArithExpr>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Bracket(Box<Stmt>),
     Skip,
@@ -24,4 +24,10 @@ pub enum Stmt {
     Seq(Box<Stmt>, Box<Stmt>),
     If(BoolExpr, Box<Stmt>, Box<Stmt>),
     While(BoolExpr, Box<Stmt>),
+}
+#[derive(Debug, Clone)]
+pub struct Prog {
+    pub input: String,
+    pub output: String,
+    pub body: Stmt,
 }
