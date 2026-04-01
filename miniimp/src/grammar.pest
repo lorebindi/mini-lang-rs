@@ -1,20 +1,18 @@
-// Per gestire la sequenza (Composition) senza ricorsione infinita:
-// 1. Elementi base
+// 1. Base Element
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
-ident      = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-number     = @{ ASCII_DIGIT+ }
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+number = @{ ASCII_DIGIT+ }
 neg_number = {"(" ~ "-" ~ number ~ ")"}
 
 
-// 2. Espressioni Aritmetiche (Expr)
+// 2. Arithmetic Expression
 expr   = { term ~ (add_op ~ term)* }
 term   = { factor ~ (mul_op ~ factor)* }
 factor = { number | ident | "(" ~ expr ~ ")" | neg_number }
 add_op = { "+" | "-" }
 mul_op = { "*" }
 
-// 3. Espressioni Booleane (BoolExpr)
-// Nota: aggiunte le parentesi per bool_expr per evitare ambiguità
+// 3. BoolExpr
 bool_expr = { bool_and }
 
 bool_and = { bool_not ~ (and_op ~ bool_not)* }
@@ -33,8 +31,7 @@ bool_true  = @{ "true" ~ !ASCII_ALPHANUMERIC }
 bool_false = @{ "false" ~ !ASCII_ALPHANUMERIC }
 bool_atom_bracket = {"(" ~ bool_expr ~ ")"}
 
-// 4. Comandi (Cmd)
-// Per gestire la sequenza (Composition) senza ricorsione infinita:
+// 4. Statement
 cmd = { stmt ~ (";" ~ stmt)* }
 
 stmt = {
@@ -51,8 +48,7 @@ while_stmt = { "while" ~ bool_expr ~ "do" ~ stmt }
 skip = @{ "skip" ~ !ASCII_ALPHANUMERIC }
 bracket_cmd = { "(" ~ cmd ~ ")" }
 
-// 5. Programma (Prog)
-// Corretto per rispecchiare la tua enum Prog::Main
+// 5. Program (Prog)
 prog = {
     SOI ~
     "def" ~ "main" ~ "with" ~ "input" ~ ident ~ "output" ~ ident ~ "as" ~ cmd ~
