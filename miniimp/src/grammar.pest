@@ -18,10 +18,10 @@ mul_op = { "*" }
 bool_expr = { bool_and }
 
 bool_and = { bool_not ~ (and_op ~ bool_not)* }
-and_op = {"and"}
+and_op = @{ "and" ~ !ASCII_ALPHANUMERIC }
 
 bool_not = { not_op ~ bool_not | bool_atom }
-not_op = {"not"}
+not_op = @{ "not" ~ !ASCII_ALPHANUMERIC }
 
 bool_atom = {
       bool_true
@@ -29,8 +29,8 @@ bool_atom = {
     | expr ~ "<" ~ expr
     | bool_atom_bracket
 }
-bool_true = {"true"}
-bool_false = {"false"}
+bool_true  = @{ "true" ~ !ASCII_ALPHANUMERIC }
+bool_false = @{ "false" ~ !ASCII_ALPHANUMERIC }
 bool_atom_bracket = {"(" ~ bool_expr ~ ")"}
 
 // 4. Comandi (Cmd)
@@ -48,7 +48,7 @@ stmt = {
 assign     = { ident ~ ":=" ~ expr }
 if_stmt    = { "if" ~ bool_expr ~ "then" ~ stmt ~ "else" ~ stmt }
 while_stmt = { "while" ~ bool_expr ~ "do" ~ stmt }
-skip       = { "skip" }
+skip = @{ "skip" ~ !ASCII_ALPHANUMERIC }
 bracket_cmd = { "(" ~ cmd ~ ")" }
 
 // 5. Programma (Prog)
