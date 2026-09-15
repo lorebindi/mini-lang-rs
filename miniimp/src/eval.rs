@@ -30,7 +30,7 @@ pub fn eval_stmt(stmt: &Stmt, env: &mut Env)  {
             eval_stmt(c2, env);
         },
         Stmt::If(cond, c1, c2 ) => {
-            if (eval_bool(cond, env)) {
+            if eval_bool(cond, env) {
                 eval_stmt(c1, env);
             } else {
                 eval_stmt(c2, env);

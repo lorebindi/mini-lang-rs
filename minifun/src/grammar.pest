@@ -1,0 +1,105 @@
+// ==========================
+// 1. Base Elements
+// ==========================
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+number = @{ "-"? ~ ASCII_DIGIT+ }
+
+// Keywords (per evitare conflitti con ident)
+kw_true  = @{ "true"  ~ !ASCII_ALPHANUMERIC }
+kw_false = @{ "false" ~ !ASCII_ALPHANUMERIC }
+kw_if    = @{ "if"    ~ !ASCII_ALPHANUMERIC }
+kw_then  = @{ "then"  ~ !ASCII_ALPHANUMERIC }
+kw_else  = @{ "else"  ~ !ASCII_ALPHANUMERIC }
+kw_let   = @{ "let"   ~ !ASCII_ALPHANUMERIC }
+kw_in    = @{ "in"    ~ !ASCII_ALPHANUMERIC }
+kw_fun   = @{ "fun"   ~ !ASCII_ALPHANUMERIC }
+kw_letfun= @{ "letfun"~ !ASCII_ALPHANUMERIC }
+
+// ==========================
+// 2. Program
+// ==========================
+term = { SOI ~ expr ~ EOI }
+
+// ==========================
+// 3. Expression (entry point)
+// ==========================
+expr = {
+    letfun_expr
+  | let_expr
+  | if_expr
+  | fun_expr
+  | logic_expr
+}
+
+// ==========================
+// 4. High-level constructs
+// ==========================
+
+letfun_expr = {
+    kw_letfun ~ ident ~ ident ~ "=" ~ expr ~ kw_in ~ expr
+}
+
+let_expr = {
+    kw_let ~ ident ~ "=" ~ expr ~ kw_in ~ expr
+}
+
+if_expr = {
+    kw_if ~ expr ~ kw_then ~ expr ~ kw_else ~ expr
+}
+
+fun_expr = {
+    kw_fun ~ ident ~ "=>" ~ expr
+}
+
+// ==========================
+// 5. Logical / Binary Ops
+// ==========================
+
+logic_expr = { comp_expr ~ (and_op ~ comp_expr)* }
+
+and_op = @{ "&&" }
+
+comp_expr = { add_expr ~ (lt_op ~ add_expr)? }
+
+lt_op = @{ "<" }
+
+// ==========================
+// 6. Arithmetic precedence
+// ==========================
+
+add_expr = { mul_expr ~ (add_op ~ mul_expr)* }
+add_op = { "+" | "-" }
+
+mul_expr = { unary_expr ~ (mul_op ~ unary_expr)* }
+mul_op = { "*" }
+
+// ==========================
+// 7. Unary
+// ==========================
+
+unary_expr = {
+    not_expr
+  | application
+}
+
+not_expr = { "~" ~ unary_expr }
+
+// ==========================
+// 8. Function application (IMPORTANT)
+// ==========================
+
+application = { atom ~ atom+ | atom }
+
+// ==========================
+// 9. Atomic expressions
+// ==========================
+
+atom = {
+      number
+    | kw_true
+    | kw_false
+    | ident
+    | "(" ~ expr ~ ")"
+}
