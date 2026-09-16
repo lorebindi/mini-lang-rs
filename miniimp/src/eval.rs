@@ -1,17 +1,17 @@
 use crate::ast::*;
 use crate::enviroment::*;
 
-pub fn eval_arith(expr: &ArithExpr, env: &Env) -> i64 {
+pub fn eval_arith(expr: &ArithExpr, env: &Environment) -> i64 {
     match expr {
         ArithExpr::Num(n) => *n,
-        ArithExpr::Var(x) => lookup(env, x),
+        ArithExpr::Var(x) => env.lookup(x),
         ArithExpr::Add(e1, e2) => eval_arith(e1, env) + eval_arith(e2, env),
         ArithExpr::Sub(e1, e2) => eval_arith(e1, env) - eval_arith(e2, env),
         ArithExpr::Mul(e1, e2) => eval_arith(e1, env) * eval_arith(e2, env),
     }
 }
 
-pub fn eval_bool(expr: &BoolExpr, env: &Env) -> bool {
+pub fn eval_bool(expr: &BoolExpr, env: &Environment) -> bool {
     match expr {
         BoolExpr::True => true,
         BoolExpr::False => false,
@@ -21,10 +21,10 @@ pub fn eval_bool(expr: &BoolExpr, env: &Env) -> bool {
     }
 }
 
-pub fn eval_stmt(stmt: &Stmt, env: &mut Env)  {
+pub fn eval_stmt(stmt: &Stmt, env: &mut Environment)  {
     match stmt {
         Stmt::Skip => (),
-        Stmt::Assign(var, value) => update(env, var.to_string(), eval_arith(value, env)),
+        Stmt::Assign(var, value) => env.update(var.to_string(), eval_arith(value, env)),
         Stmt::Seq(c1, c2) => {
             eval_stmt(c1, env);
             eval_stmt(c2, env);

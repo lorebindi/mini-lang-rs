@@ -3,19 +3,22 @@
 // ==========================
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 
-ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 number = @{ "-"? ~ ASCII_DIGIT+ }
 
 // Keywords (per evitare conflitti con ident)
-kw_true  = @{ "true"  ~ !ASCII_ALPHANUMERIC }
-kw_false = @{ "false" ~ !ASCII_ALPHANUMERIC }
-kw_if    = @{ "if"    ~ !ASCII_ALPHANUMERIC }
-kw_then  = @{ "then"  ~ !ASCII_ALPHANUMERIC }
-kw_else  = @{ "else"  ~ !ASCII_ALPHANUMERIC }
-kw_let   = @{ "let"   ~ !ASCII_ALPHANUMERIC }
-kw_in    = @{ "in"    ~ !ASCII_ALPHANUMERIC }
-kw_fun   = @{ "fun"   ~ !ASCII_ALPHANUMERIC }
-kw_letfun= @{ "letfun"~ !ASCII_ALPHANUMERIC }
+kw_true  = @{ "true"  ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_false = @{ "false" ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_if    = @{ "if"    ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_then  = @{ "then"  ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_else  = @{ "else"  ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_let   = @{ "let"   ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_in    = @{ "in"    ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_fun   = @{ "fun"   ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_letfun = @{ "letfun" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+keyword = @{ kw_letfun | kw_true | kw_false | kw_if | kw_then | kw_else | kw_let | kw_in | kw_fun }
+
+ident = @{ !keyword ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // ==========================
 // 2. Program

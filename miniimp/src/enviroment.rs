@@ -1,11 +1,23 @@
 use std::collections::HashMap;
 
-pub type Env = HashMap<String, i64>;
-
-pub fn lookup(env: &Env, var: &str) -> i64 {
-    *env.get(var).expect(&format!("Variabile non definita: {}", var))
+pub struct Environment {
+    bindings: HashMap<String, i64>,
 }
 
-pub fn update(env: &mut Env, var: String, val: i64) {
-    env.insert(var, val);
+impl Environment {
+    pub fn new() -> Self {
+        Self {
+            bindings: HashMap::new(),
+        }
+    }
+
+    pub fn lookup(&self, var: &str) -> i64 {
+        *self.bindings
+            .get(var)
+            .unwrap_or_else(|| panic!("Undefined variable: {}", var))
+    }
+
+    pub fn update(&mut self, var: String, val: i64) {
+        self.bindings.insert(var, val);
+    }
 }
