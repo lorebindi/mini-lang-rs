@@ -469,3 +469,69 @@ fn test_keyword_as_identifier_is_rejected() {
     assert!(parse_term("let if = 1 in if").is_none());
 }
 
+// little programs
+
+fn num(n: i32) -> Term { Term::Num(n) }
+fn var(s: &str) -> Term { Term::Var(s.to_string()) }
+fn bin(op: BinOp, l: Term, r: Term) -> Term { Term::BinOp(op, Box::new(l), Box::new(r)) }
+fn app(f: Term, a: Term) -> Term { Term::App(Box::new(f), Box::new(a)) }
+fn not_(t: Term) -> Term { Term::Not(Box::new(t)) }
+fn iff(c: Term, t: Term, e: Term) -> Term { Term::If(Box::new(c), Box::new(t), Box::new(e)) }
+fn fun(p: &str, b: Term) -> Term { Term::Fun(p.to_string(), Box::new(b)) }
+fn let_(v: &str, val: Term, body: Term) -> Term { Term::Let(v.to_string(), Box::new(val), Box::new(body)) }
+fn letfun(f: &str, p: &str, body: Term, in_: Term) -> Term {
+    Term::LetFun(f.to_string(), p.to_string(), Box::new(body), Box::new(in_))
+}
+
+#[test]
+fn test_program_factorial() {
+    let input = r#"
+        letfun fact n =
+            if n < 1
+            then 1
+            else n * fact (n - 1)
+        in
+        let doubled = fact 5 in
+        doubled + 1
+    "#;
+
+    let expected = letfun(
+        "fact", "n",
+        iff(
+            bin(BinOp::Lt, var("n"), num(1)),
+            num(1),
+            bin(BinOp::Mul, var("n"), app(var("fact"), bin(BinOp::Sub, var("n"), num(1)))),
+        ),
+        let_(
+            "doubled",
+            app(var("fact"), num(5)),
+            bin(BinOp::Add, var("doubled"), num(1)),
+        ),
+    );
+
+    assert_ast(input, expected);
+}
+
+#[test]
+fn test_program_higher_order_function() {
+    let input = r#"
+        let apply_twice = fun f =>
+            fun x => f (f x)
+        in
+        let inc = fun y => y + 1 in
+        apply_twice inc 5
+    "#;
+
+    let expected = let_(
+        "apply_twice",
+        fun("f", fun("x", app(var("f"), app(var("f"), var("x"))))),
+        let_(
+            "inc",
+            fun("y", bin(BinOp::Add, var("y"), num(1))),
+            app(app(var("apply_twice"), var("inc")), num(5)),
+        ),
+    );
+
+    assert_ast(input, expected);
+}
+
