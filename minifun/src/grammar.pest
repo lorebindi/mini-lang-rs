@@ -16,7 +16,10 @@ kw_in    = @{ "in"    ~ !(ASCII_ALPHANUMERIC | "_") }
 kw_fun   = @{ "fun"   ~ !(ASCII_ALPHANUMERIC | "_") }
 kw_letfun = @{ "letfun" ~ !(ASCII_ALPHANUMERIC | "_") }
 
-keyword = @{ kw_letfun | kw_true | kw_false | kw_if | kw_then | kw_else | kw_let | kw_in | kw_fun }
+kw_int  = @{ "Int"  ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_bool = @{ "Bool" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+keyword = @{ kw_letfun | kw_true | kw_false | kw_if | kw_then | kw_else | kw_let | kw_in | kw_fun | kw_int | kw_bool}
 
 ident = @{ !keyword ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
@@ -37,11 +40,23 @@ expr = {
 }
 
 // ==========================
-// 4. High-level constructs
+// 4. Types
+// ==========================
+
+type_expr = { type_atom ~ ("->" ~ type_expr)? }
+
+type_atom = {
+      kw_int
+    | kw_bool
+    | "(" ~ type_expr ~ ")"
+}
+
+// ==========================
+// 5. High-level constructs
 // ==========================
 
 letfun_expr = {
-    kw_letfun ~ ident ~ ident ~ "=" ~ expr ~ kw_in ~ expr
+    kw_letfun ~ ident ~ ident ~ ":" ~ type_expr ~ "=" ~ expr ~ kw_in ~ expr
 }
 
 let_expr = {
@@ -53,11 +68,11 @@ if_expr = {
 }
 
 fun_expr = {
-    kw_fun ~ ident ~ "=>" ~ expr
+    kw_fun ~ ident ~ ":" ~ type_expr ~ "=>" ~ expr
 }
 
 // ==========================
-// 5. Logical / Binary Ops
+// 6. Logical / Binary Ops
 // ==========================
 
 logic_expr = { comp_expr ~ (and_op ~ comp_expr)* }
@@ -69,7 +84,7 @@ comp_expr = { add_expr ~ (lt_op ~ add_expr)? }
 lt_op = @{ "<" }
 
 // ==========================
-// 6. Arithmetic precedence
+// 7. Arithmetic precedence
 // ==========================
 
 add_expr = { mul_expr ~ (add_op ~ mul_expr)* }
@@ -79,7 +94,7 @@ mul_expr = { unary_expr ~ (mul_op ~ unary_expr)* }
 mul_op = { "*" }
 
 // ==========================
-// 7. Unary
+// 8. Unary
 // ==========================
 
 unary_expr = {
@@ -90,13 +105,13 @@ unary_expr = {
 not_expr = { "~" ~ unary_expr }
 
 // ==========================
-// 8. Function application (IMPORTANT)
+// 9. Function application (IMPORTANT)
 // ==========================
 
 application = { atom ~ atom+ | atom }
 
 // ==========================
-// 9. Atomic expressions
+// 10. Atomic expressions
 // ==========================
 
 atom = {

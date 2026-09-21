@@ -1,7 +1,9 @@
 use std::rc::Rc;
 
 use crate::ast::*;
-use crate::environment::Environment;
+use crate::scope::Scope;
+
+pub type Environment = Scope<Value>;
 
 #[derive(Clone)]
 pub struct Closure {

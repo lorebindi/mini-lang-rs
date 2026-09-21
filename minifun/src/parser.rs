@@ -1,7 +1,6 @@
 use pest::iterators::Pair;
-use pest::Parser;
 use pest_derive::Parser;
-use crate::ast::{BinOp, Term};
+use crate::ast::*;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -33,6 +32,30 @@ fn build_atom(pair: Pair<Rule>) -> Term {
         }
 
         _ => unreachable!(),
+    }
+}
+
+fn build_type(pair: Pair<Rule>) -> Type {
+    match pair.as_rule() {
+        Rule::type_expr => {
+            let mut inner = pair.into_inner();
+            let left = build_type(inner.next().unwrap()); // type_atom
+
+            match inner.next() {
+                Some(right) => Type::Arrow(Box::new(left), Box::new(build_type(right))),
+                None => left,
+            }
+        }
+
+        Rule::type_atom => {
+            let inner_pair = pair.into_inner().next().unwrap();
+            build_type(inner_pair)
+        }
+
+        Rule::kw_int => Type::Int,
+        Rule::kw_bool => Type::Bool,
+
+        _ => unreachable!("Unexpected rule in Type: {:?}", pair.as_rule()),
     }
 }
 
@@ -159,9 +182,10 @@ fn build_fun(pair: Pair<Rule>) -> Term {
 
     inner.next(); // skip kw_fun
     let parameter = inner.next().unwrap().as_str().to_string();
+    let param_type = build_type(inner.next().unwrap());
     let body = build_expr(inner.next().unwrap());
 
-    Term::Fun(parameter, Box::new(body))
+    Term::Fun(parameter, param_type, Box::new(body))
 }
 
 fn build_if(pair: Pair<Rule>) -> Term {
@@ -203,6 +227,7 @@ fn build_letfun(pair: Pair<Rule>) -> Term {
     inner.next(); // skip kw_letfun
     let function_name = inner.next().unwrap().as_str().to_string();
     let parameter = inner.next().unwrap().as_str().to_string();
+    let param_type = build_type(inner.next().unwrap());
     let function_body = build_expr(inner.next().unwrap());
     inner.next(); // skip kw_in
     let in_expr = build_expr(inner.next().unwrap());
@@ -210,6 +235,7 @@ fn build_letfun(pair: Pair<Rule>) -> Term {
     Term::LetFun(
         function_name,
         parameter,
+        param_type,
         Box::new(function_body),
         Box::new(in_expr),
     )

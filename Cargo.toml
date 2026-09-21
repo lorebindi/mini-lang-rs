@@ -4,4 +4,4 @@ members = [
     "minifun"
 ]
 
-resolver = "3"
+resolver = "2"

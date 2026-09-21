@@ -1,5 +1,7 @@
 use minifun::parser::*;
 use minifun::ast::*;
+mod common;
+use common::*;
 
 fn assert_ast(input: &str, expected: Term) {
     let term = parse_term(input).expect("Parsing fallito");
@@ -282,9 +284,10 @@ fn test_if_nested() {
 #[test]
 fn test_fun() {
     assert_ast(
-        "fun x => x",
+        "fun x : Int => x",
         Term::Fun(
             "x".to_string(),
+            Type::Int,
             Box::new(Term::Var("x".to_string())),
         ),
     );
@@ -320,10 +323,11 @@ fn test_application_left_associativity() {
 fn test_apply_function_expression() {
     // (fun x => x) 5
     assert_ast(
-        "(fun x => x) 5",
+        "(fun x : Int => x) 5",
         Term::App(
             Box::new(Term::Fun(
                 "x".to_string(),
+                Type::Int,
                 Box::new(Term::Var("x".to_string())),
             )),
             Box::new(Term::Num(5)),
@@ -393,10 +397,11 @@ fn test_let() {
 #[test]
 fn test_letfun() {
     assert_ast(
-        "letfun f x = x + 1 in f 2",
+        "letfun f x : Int -> Int = x + 1 in f 2",
         Term::LetFun(
             "f".to_string(),
             "x".to_string(),
+            Type::Arrow(Box::new(Type::Int), Box::new(Type::Int)),
             Box::new(Term::BinOp(
                 BinOp::Add,
                 Box::new(Term::Var("x".to_string())),
@@ -470,23 +475,10 @@ fn test_keyword_as_identifier_is_rejected() {
 }
 
 // little programs
-
-fn num(n: i32) -> Term { Term::Num(n) }
-fn var(s: &str) -> Term { Term::Var(s.to_string()) }
-fn bin(op: BinOp, l: Term, r: Term) -> Term { Term::BinOp(op, Box::new(l), Box::new(r)) }
-fn app(f: Term, a: Term) -> Term { Term::App(Box::new(f), Box::new(a)) }
-fn not_(t: Term) -> Term { Term::Not(Box::new(t)) }
-fn iff(c: Term, t: Term, e: Term) -> Term { Term::If(Box::new(c), Box::new(t), Box::new(e)) }
-fn fun(p: &str, b: Term) -> Term { Term::Fun(p.to_string(), Box::new(b)) }
-fn let_(v: &str, val: Term, body: Term) -> Term { Term::Let(v.to_string(), Box::new(val), Box::new(body)) }
-fn letfun(f: &str, p: &str, body: Term, in_: Term) -> Term {
-    Term::LetFun(f.to_string(), p.to_string(), Box::new(body), Box::new(in_))
-}
-
 #[test]
 fn test_program_factorial() {
     let input = r#"
-        letfun fact n =
+        letfun fact n : Int -> Int =
             if n < 1
             then 1
             else n * fact (n - 1)
@@ -496,7 +488,7 @@ fn test_program_factorial() {
     "#;
 
     let expected = letfun(
-        "fact", "n",
+        "fact", "n", t_arr(t_int(), t_int()),
         iff(
             bin(BinOp::Lt, var("n"), num(1)),
             num(1),
@@ -515,19 +507,23 @@ fn test_program_factorial() {
 #[test]
 fn test_program_higher_order_function() {
     let input = r#"
-        let apply_twice = fun f =>
-            fun x => f (f x)
+        let apply_twice = fun f : Int -> Int =>
+            fun x : Int => f (f x)
         in
-        let inc = fun y => y + 1 in
+        let inc = fun y : Int => y + 1 in
         apply_twice inc 5
     "#;
 
     let expected = let_(
         "apply_twice",
-        fun("f", fun("x", app(var("f"), app(var("f"), var("x"))))),
+        fun(
+            "f",
+            t_arr(t_int(), t_int()),
+            fun("x", t_int(), app(var("f"), app(var("f"), var("x"))))
+        ),
         let_(
             "inc",
-            fun("y", bin(BinOp::Add, var("y"), num(1))),
+            fun("y", t_int(), bin(BinOp::Add, var("y"), num(1))),
             app(app(var("apply_twice"), var("inc")), num(5)),
         ),
     );
