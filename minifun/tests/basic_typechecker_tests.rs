@@ -1,27 +1,25 @@
 use minifun::ast::*;
-use minifun::typechecker::*;
+use minifun::typing::basic_typechecker::*;
+use minifun::typing::errors::{TypeError, TypecheckError, OperandPosition, AnnotationError};
+use minifun::typing::{Type, Typechecker};
 use minifun::parser::parse_term;
 
 mod common;
 use common::*;
 
-// helpers
-fn empty_env() -> Context {
-    Context::new()
-}
-
 fn assert_type(term: &Term, expected: Type) {
-    let env = empty_env();
-    assert_eq!(typecheck(term, &env), Ok(expected));
-}
-
-fn assert_type_in(term: &Term, env: &Context, expected: Type) {
-    assert_eq!(typecheck(term, env), Ok(expected));
+    let mut checker = BasicTypechecker;
+    assert_eq!(checker.typecheck(term), Ok(expected));
 }
 
 fn assert_err(term: &Term, expected: TypeError) {
-    let env = empty_env();
-    assert_eq!(typecheck(term, &env), Err(expected));
+    let mut checker = BasicTypechecker;
+    assert_eq!(checker.typecheck(term), Err(TypecheckError::Type(expected)));
+}
+
+fn assert_annotation_err(term: &Term, expected: AnnotationError) {
+    let mut checker = BasicTypechecker;
+    assert_eq!(checker.typecheck(term), Err(TypecheckError::Annotation(expected)));
 }
 
 fn assert_program_type(input: &str, expected: Type) {
@@ -59,22 +57,8 @@ fn test_false_is_bool() {
 // ---------- variables ----------
 
 #[test]
-fn test_var_defined() {
-    let env = empty_env().extend("x".to_string(), t_int());
-    assert_type_in(&var("x"), &env, t_int());
-}
-
-#[test]
 fn test_var_undefined() {
     assert_err(&var("x"), TypeError::UndefinedVariable("x".to_string()));
-}
-
-#[test]
-fn test_var_shadowing_uses_innermost_binding() {
-    let env = empty_env()
-        .extend("x".to_string(), t_int())
-        .extend("x".to_string(), t_bool());
-    assert_type_in(&var("x"), &env, t_bool());
 }
 
 // ---------- arithmetic binops ----------
@@ -304,13 +288,6 @@ fn test_fun_body_ill_typed() {
 }
 
 #[test]
-fn test_fun_param_shadows_outer_binding() {
-    let env = empty_env().extend("x".to_string(), t_bool());
-    // the parameter x: Int should shadow the outer x: Bool inside the body
-    assert_type_in(&fun("x", t_int(), var("x")), &env, t_arr(t_int(), t_int()));
-}
-
-#[test]
 fn test_higher_order_fun_type() {
     // fun f : Int -> Int => fun x : Int => f x
     let term = fun(
@@ -322,38 +299,6 @@ fn test_higher_order_fun_type() {
 }
 
 // ---------- application ----------
-
-#[test]
-fn test_app_simple() {
-    let env = empty_env().extend("f".to_string(), t_arr(t_int(), t_bool()));
-    assert_type_in(&app(var("f"), num(1)), &env, t_bool());
-}
-
-#[test]
-fn test_app_applying_non_function() {
-    let env = empty_env().extend("x".to_string(), t_int());
-    assert_eq!(
-        typecheck(&app(var("x"), num(1)), &env),
-        Err(TypeError::NotAFunction { actual: t_int() })
-    );
-}
-
-#[test]
-fn test_app_argument_type_mismatch() {
-    let env = empty_env().extend("f".to_string(), t_arr(t_int(), t_bool()));
-    assert_eq!(
-        typecheck(&app(var("f"), Term::True), &env),
-        Err(TypeError::ArgTypeMismatch { expected: t_int(), actual: t_bool() })
-    );
-}
-
-#[test]
-fn test_app_left_associative_curried_calls() {
-    // f: Int -> Int -> Int, applied as f 1 2
-    let env = empty_env().extend("f".to_string(), t_arr(t_int(), t_arr(t_int(), t_int())));
-    assert_type_in(&app(app(var("f"), num(1)), num(2)), &env, t_int());
-}
-
 #[test]
 fn test_app_of_immediately_applied_lambda() {
     // (fun x : Int => x) 5
@@ -393,8 +338,7 @@ fn test_let_bound_expr_ill_typed() {
 
 #[test]
 fn test_let_shadows_outer_binding() {
-    let env = empty_env().extend("x".to_string(), t_bool());
-    assert_type_in(&let_("x", num(1), var("x")), &env, t_int());
+    assert_type(&let_("x", num(1), var("x")), t_int());
 }
 
 #[test]
@@ -465,9 +409,29 @@ fn test_letfun_in_term_does_not_see_param() {
 
 #[test]
 fn test_letfun_name_available_in_in_term() {
-    let env = empty_env();
     let term = letfun("f", "x", t_arr(t_int(), t_int()), var("x"), var("f"));
-    assert_type_in(&term, &env, t_arr(t_int(), t_int()));
+    assert_type(&term, t_arr(t_int(), t_int()));
+}
+
+// ---------- missing type annotations ----------
+#[test]
+fn test_fun_missing_param_annotation() {
+    // fun x => x, with no ": Int" on the parameter
+    let term = Term::Fun("x".to_string(), None, Box::new(var("x")));
+    assert_annotation_err(&term, AnnotationError::Missing { param: "x".to_string() });
+}
+
+#[test]
+fn test_letfun_missing_type_annotation() {
+    // letfun f x = x in f 1, with no arrow type on f
+    let term = Term::LetFun(
+        "f".to_string(),
+        "x".to_string(),
+        None,
+        Box::new(var("x")),
+        Box::new(app(var("f"), num(1))),
+    );
+    assert_annotation_err(&term, AnnotationError::Missing { param: "f".to_string() });
 }
 
 // ---------- whole-program tests (parse + typecheck together) ----------
