@@ -56,7 +56,7 @@ type_atom = {
 // ==========================
 
 letfun_expr = {
-    kw_letfun ~ ident ~ ident ~ ":" ~ type_expr ~ "=" ~ expr ~ kw_in ~ expr
+    kw_letfun ~ ident ~ ident ~ (":" ~ type_expr)? ~ "=" ~ expr ~ kw_in ~ expr
 }
 
 let_expr = {
@@ -68,7 +68,7 @@ if_expr = {
 }
 
 fun_expr = {
-    kw_fun ~ ident ~ ":" ~ type_expr ~ "=>" ~ expr
+    kw_fun ~ ident ~ (":" ~ type_expr)? ~ "=>" ~ expr
 }
 
 // ==========================

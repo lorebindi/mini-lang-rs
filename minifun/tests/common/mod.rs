@@ -8,6 +8,7 @@
 #![allow(dead_code)] // not every test file uses every helper
 
 use minifun::ast::*;
+use minifun::typing::*;
 
 pub fn t_int() -> Type { Type::Int }
 pub fn t_bool() -> Type { Type::Bool }
@@ -19,10 +20,17 @@ pub fn bin(op: BinOp, l: Term, r: Term) -> Term { Term::BinOp(op, Box::new(l), B
 pub fn app(f: Term, a: Term) -> Term { Term::App(Box::new(f), Box::new(a)) }
 pub fn not_(t: Term) -> Term { Term::Not(Box::new(t)) }
 pub fn iff(c: Term, t: Term, e: Term) -> Term { Term::If(Box::new(c), Box::new(t), Box::new(e)) }
-pub fn fun(p: &str, t: Type, b: Term) -> Term { Term::Fun(p.to_string(), t, Box::new(b)) }
+pub fn fun(p: &str, t: Type, b: Term) -> Term { Term::Fun(p.to_string(), Some(t), Box::new(b)) }
 pub fn let_(v: &str, val: Term, body: Term) -> Term {
     Term::Let(v.to_string(), Box::new(val), Box::new(body))
 }
 pub fn letfun(f: &str, p: &str, t: Type, body: Term, in_: Term) -> Term {
-    Term::LetFun(f.to_string(), p.to_string(), t, Box::new(body), Box::new(in_))
+    Term::LetFun(f.to_string(), p.to_string(), Some(t), Box::new(body), Box::new(in_))
+}
+
+pub fn fun_unannotated(p: &str, b: Term) -> Term {
+    Term::Fun(p.to_string(), None, Box::new(b))
+}
+pub fn letfun_unannotated(f: &str, p: &str, body: Term, in_: Term) -> Term {
+    Term::LetFun(f.to_string(), p.to_string(), None, Box::new(body), Box::new(in_))
 }

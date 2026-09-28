@@ -1,28 +1,12 @@
-use std::fmt;
+//! Abstract Syntax Tree (AST) definitions for the 'minifun' language.
+//!
+//! This module defines the core syntactic structures of the language:
+//! - 'BinOp': Arithmetic, comparison, and boolean binary operators, with pretty-printing support.
+//! - 'Term': The primary expression grammar, including base literals, variables, control flow,
+//!   unary/binary operations, lambda abstractions, applications, and both standard and recursive
+//!   let-bindings with optional type annotations.
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Type{
-    Int,
-    Bool,
-    Arrow(Box<Type>, Box<Type>), // t -> t'
-}
-
-impl fmt::Display for Type {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Type::Int => write!(f, "int"),
-            Type::Bool => write!(f, "bool"),
-            Type::Arrow(arg, ret) => {
-                // If the argument is itself a function, parentheses are needed
-                // because -> is right-associative: (a -> b) -> c
-                match **arg {
-                    Type::Arrow(_, _) => write!(f, "({arg}) -> {ret}"),
-                    _ => write!(f, "{arg} -> {ret}"),
-                }
-            }
-        }
-    }
-}
+use crate::typing::types::Type;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinOp {
@@ -50,11 +34,8 @@ pub enum Term {
     BinOp(BinOp, Box<Term>, Box<Term>),
     Not(Box<Term>),
     If(Box<Term>, Box<Term>, Box<Term>),
-    // The Type of Fun refers to the type that the argument have to assume in the body
-    Fun(String, Type, Box<Term>),
+    Fun(String, Option<Type>, Box<Term>),
     App(Box<Term>, Box<Term>),
     Let(String, Box<Term>, Box<Term>),
-    // The Type of LetFun MUST be a function, i.e.  t -> t' where t is the type
-    // of the argument and t' is the type of the resulting term
-    LetFun(String, String, Type, Box<Term>, Box<Term>),
+    LetFun(String, String, Option<Type>, Box<Term>, Box<Term>),
 }

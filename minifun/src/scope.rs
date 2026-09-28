@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-/// A `Scope<T>` forms an immutable/persistent chain of nested environments
-/// linked to their enclosing parent scopes via reference counting (`Rc`).
+/// A 'Scope<T>' forms an immutable/persistent chain of nested environments
+/// linked to their enclosing parent scopes via reference counting ('Rc').
 /// It serves two roles in the language pipeline:
-/// - `Context`: mapping variable names to their static `Type` during typechecking.
-/// - `Environment`: mapping variable names to runtime `Value` during evaluation.
+/// - 'Context': mapping variable names to their static 'Type' during typechecking.
+/// - 'Environment': mapping variable names to runtime 'Value' during evaluation.
 #[derive(Clone)]
 pub struct Scope<T> {
-    bindings: HashMap<String, T>, // Bindings defined in the current scope.
-    parent: Option<Rc<Scope<T>>>, // Reference to the enclosing scope,
+    pub(crate) bindings: HashMap<String, T>, // Bindings defined in the current scope.
+    pub(crate) parent: Option<Rc<Scope<T>>>, // Reference to the enclosing scope,
                                      // None means that this is the outermost scope.
 }
 

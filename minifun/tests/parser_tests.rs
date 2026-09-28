@@ -1,5 +1,6 @@
 use minifun::parser::*;
 use minifun::ast::*;
+use minifun::typing::{Type};
 mod common;
 use common::*;
 
@@ -287,8 +288,57 @@ fn test_fun() {
         "fun x : Int => x",
         Term::Fun(
             "x".to_string(),
-            Type::Int,
+            Some(Type::Int),
             Box::new(Term::Var("x".to_string())),
+        ),
+    );
+}
+
+#[test]
+fn test_fun_without_type_annotation() {
+    assert_ast(
+        "fun x => x",
+        Term::Fun(
+            "x".to_string(),
+            None,
+            Box::new(Term::Var("x".to_string())),
+        ),
+    );
+}
+
+#[test]
+fn test_fun_without_annotation_applied_immediately() {
+    // (fun x => x) 5
+    assert_ast(
+        "(fun x => x) 5",
+        Term::App(
+            Box::new(Term::Fun(
+                "x".to_string(),
+                None,
+                Box::new(Term::Var("x".to_string())),
+            )),
+            Box::new(Term::Num(5)),
+        ),
+    );
+}
+
+#[test]
+fn test_nested_fun_mixed_annotations() {
+    // fun f : Int -> Int => fun x => f x
+    // external parameter has the annotation while the internal one not
+    assert_ast(
+        "fun f : Int -> Int => fun x => f x",
+        Term::Fun(
+            "f".to_string(),
+            Some(Type::Arrow(Box::new(Type::Int), Box::new(Type::Int))),
+            Box::new(Term::Fun(
+                "x".to_string(),
+                None,
+                Box::new(Term::App(
+                    Box::new(Term::Var("f".to_string())),
+                    Box::new(Term::Var("x".to_string())),
+                )),
+            )),
         ),
     );
 }
@@ -327,7 +377,7 @@ fn test_apply_function_expression() {
         Term::App(
             Box::new(Term::Fun(
                 "x".to_string(),
-                Type::Int,
+                Some(Type::Int),
                 Box::new(Term::Var("x".to_string())),
             )),
             Box::new(Term::Num(5)),
@@ -401,7 +451,7 @@ fn test_letfun() {
         Term::LetFun(
             "f".to_string(),
             "x".to_string(),
-            Type::Arrow(Box::new(Type::Int), Box::new(Type::Int)),
+            Some(Type::Arrow(Box::new(Type::Int), Box::new(Type::Int))),
             Box::new(Term::BinOp(
                 BinOp::Add,
                 Box::new(Term::Var("x".to_string())),
@@ -410,6 +460,47 @@ fn test_letfun() {
             Box::new(Term::App(
                 Box::new(Term::Var("f".to_string())),
                 Box::new(Term::Num(2)),
+            )),
+        ),
+    );
+}
+
+#[test]
+fn test_letfun_without_type_annotation() {
+    assert_ast(
+        "letfun f x = x + 1 in f 2",
+        Term::LetFun(
+            "f".to_string(),
+            "x".to_string(),
+            None,
+            Box::new(Term::BinOp(
+                BinOp::Add,
+                Box::new(Term::Var("x".to_string())),
+                Box::new(Term::Num(1)),
+            )),
+            Box::new(Term::App(
+                Box::new(Term::Var("f".to_string())),
+                Box::new(Term::Num(2)),
+            )),
+        ),
+    );
+}
+
+#[test]
+fn test_letfun_without_annotation_recursive_call() {
+    assert_ast(
+        "letfun f x = f x in f 1",
+        Term::LetFun(
+            "f".to_string(),
+            "x".to_string(),
+            None,
+            Box::new(Term::App(
+                Box::new(Term::Var("f".to_string())),
+                Box::new(Term::Var("x".to_string())),
+            )),
+            Box::new(Term::App(
+                Box::new(Term::Var("f".to_string())),
+                Box::new(Term::Num(1)),
             )),
         ),
     );

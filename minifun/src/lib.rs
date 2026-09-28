@@ -1,5 +1,5 @@
 pub mod ast;
 pub mod parser;
-pub mod typechecker;
+pub mod typing;
 mod scope;
 mod eval;

@@ -1,6 +1,16 @@
+//! Pest-based recursive descent parser and AST constructor for the 'minifun' language.
+//!
+//! This module processes concrete syntax defined in 'grammar.pest' into high-level 'Term'
+//! and 'Type' representations:
+//! - Respects operator precedence: parenthesized expressions, atoms, function applications,
+//!   unary negation, multiplication, addition/subtraction, comparisons, and logical conjunctions.
+//! - Handles optional type annotations on lambda 'fun' and recursive function ('letfun') parameters.
+//! - Exposes 'parse_term' as the primary entry point for converting raw source strings into typed ASTs.
+
 use pest::iterators::Pair;
 use pest_derive::Parser;
 use crate::ast::*;
+use crate::typing::Type;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -178,11 +188,13 @@ fn build_logic_expr(pair: Pair<Rule>) -> Term {
 }
 
 fn build_fun(pair: Pair<Rule>) -> Term {
-    let mut inner = pair.into_inner();
+    let mut inner = pair.into_inner().peekable();
 
     inner.next(); // skip kw_fun
     let parameter = inner.next().unwrap().as_str().to_string();
-    let param_type = build_type(inner.next().unwrap());
+    let param_type = inner
+        .next_if(|p| p.as_rule() == Rule::type_expr)
+        .map(build_type); // Option<Type>
     let body = build_expr(inner.next().unwrap());
 
     Term::Fun(parameter, param_type, Box::new(body))
@@ -222,12 +234,14 @@ fn build_let(pair: Pair<Rule>) -> Term {
 }
 
 fn build_letfun(pair: Pair<Rule>) -> Term {
-    let mut inner = pair.into_inner();
+    let mut inner = pair.into_inner().peekable();
 
     inner.next(); // skip kw_letfun
     let function_name = inner.next().unwrap().as_str().to_string();
     let parameter = inner.next().unwrap().as_str().to_string();
-    let param_type = build_type(inner.next().unwrap());
+    let param_type = inner
+        .next_if(|p| p.as_rule() == Rule::type_expr)
+        .map(build_type); // Option<Type>
     let function_body = build_expr(inner.next().unwrap());
     inner.next(); // skip kw_in
     let in_expr = build_expr(inner.next().unwrap());
