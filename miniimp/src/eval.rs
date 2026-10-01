@@ -1,3 +1,13 @@
+//! Big-step operational semantics interpreter and expression evaluator for 'miniimp'.
+//!
+//! This module implements direct execution over the Abstract Syntax Tree by maintaining
+//! an evaluation 'Environment':
+//! - 'eval_arith': Evaluates arithmetic expressions ('ArithExpr') to 64-bit signed integers ('i64'),
+//!   resolving bound identifiers through the environment.
+//! - 'eval_bool': Evaluates boolean expressions and comparisons ('BoolExpr') to 'bool'.
+//! - 'eval_stmt': Executes commands ('Cmd') by mutating program state, handling sequential
+//!   composition, conditionals, and standard 'while' loops.
+
 use crate::ast::*;
 use crate::enviroment::*;
 
@@ -21,26 +31,26 @@ pub fn eval_bool(expr: &BoolExpr, env: &Environment) -> bool {
     }
 }
 
-pub fn eval_stmt(stmt: &Stmt, env: &mut Environment)  {
+pub fn eval_stmt(stmt: &Cmd, env: &mut Environment)  {
     match stmt {
-        Stmt::Skip => (),
-        Stmt::Assign(var, value) => env.update(var.to_string(), eval_arith(value, env)),
-        Stmt::Seq(c1, c2) => {
+        Cmd::Skip => (),
+        Cmd::Assign(var, value) => env.update(var.to_string(), eval_arith(value, env)),
+        Cmd::Seq(c1, c2) => {
             eval_stmt(c1, env);
             eval_stmt(c2, env);
         },
-        Stmt::If(cond, c1, c2 ) => {
+        Cmd::If(cond, c1, c2 ) => {
             if eval_bool(cond, env) {
                 eval_stmt(c1, env);
             } else {
                 eval_stmt(c2, env);
             }
         }
-        Stmt::While(cond, c) => {
+        Cmd::While(cond, c) => {
             while eval_bool(cond, env) {
                 eval_stmt(c, env);
             }
         }
-        Stmt::Bracket(c) => eval_stmt(c, env),
+        Cmd::Bracket(c) => eval_stmt(c, env),
     }
 }

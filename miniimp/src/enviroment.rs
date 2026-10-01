@@ -1,3 +1,9 @@
+//! Execution state and variable store for the 'miniimp' runtime environment.
+//!
+//! Provides the 'Environment' mapping identifier names ('String') to integer
+//! values ('i64'), supporting operations to look up current variable bindings
+//! and update memory during command execution.
+
 use std::collections::HashMap;
 
 pub struct Environment {
